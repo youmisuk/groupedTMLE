@@ -181,9 +181,9 @@ IPW_ATE_SE  # print results from IPW estimators when K = 8 (i.e., within-cluster
 # :: summary of results for TMLE estimators
 # We note that cluster bootstrap SE and confidence intervals are used for TMLE estimators.
 TMLE_ATE_SE <- data.frame(Estimate=TMLE_ATE)
-TMLE_ATE_SE$SE <- c(0.6019262, 0.7134150, 0.7303069) # cluster bootstrap SE
-TMLE_ATE_SE$LCI <- c(2.184569, 1.391822, 1.497694) # cluster bootstrap LCI
-TMLE_ATE_SE$UCI <- c(4.544829, 4.218349, 4.339234) # cluster bootstrap UCI
+TMLE_ATE_SE$SE <- c(0.6376980, 0.7329984, 0.7640993) # cluster bootstrap SE
+TMLE_ATE_SE$LCI <- c(1.844909, 1.090885, 1.167860) # cluster bootstrap LCI
+TMLE_ATE_SE$UCI <- c(4.325549, 3.951291, 4.174151) # cluster bootstrap UCI
 
 rownames(TMLE_ATE_SE) <- c("GroupedTMLE+Default", "GroupedTMLE+RePS", "GroupedTMLE+FePS")
 TMLE_ATE_SE # print results from TMLE estimators when K = 8 (i.e., within-cluster approach) 
@@ -219,3 +219,4 @@ TMLE_ATE_SE[c("Estimate", "LCI", "UCI")] + B
 
 # compute adjusted estimates when negative bias is present.
 TMLE_ATE_SE[c("Estimate", "LCI", "UCI")] - B
+
