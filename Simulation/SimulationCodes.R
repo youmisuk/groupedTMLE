@@ -10,22 +10,47 @@ library(tmle)
 # :: load or write functions
 source("DataGeneratingModels.R") # load a function for data generating processes (DGP) 
 
-# write a function for the clustered IPW estimator from Li et al (2013). Propensity score weighting with multilevel data. Statistics in Medicine, 32(19), 3373–3387. doi: 10.1002/sim.5786
-li.clusterATE <- function(ps, Y, Z, id) {
-  
-  # ps ... propensity scores
-  # Y ... outcome
-  # Z ... treatment
-  # id ... cluster id
+# write a generic function that implements the marginal IPW, clustered IPW, and grouped GIPW estimators.
+groupedestimator <- function(ps, Y, Z, id) {
   
   dataf <- data.frame(Y, Z, ps, id)
-  dataf$temp.wt <- with(dataf, Z/ps + (1-Z)/(1-ps))
-  temp.dat <- dataf %>% group_by(id) %>% summarize(clusterATE=IPW_ate(temp.wt, Y, Z), clusterSE=IPW_se(temp.wt, Y, Z), wt=sum(temp.wt), .groups = 'drop') 
-  temp.ate = sum(temp.dat$clusterATE * temp.dat$wt, na.rm = TRUE) / sum(temp.dat$wt[!is.na(temp.dat$clusterATE)])
-  temp.se = sqrt(sum(temp.dat$wt^2*temp.dat$clusterSE^2, na.rm = TRUE)) / sum(temp.dat$wt[is.finite(temp.dat$clusterSE)], na.rm = TRUE)
+  dataf$temp.wt <- temp.wt <- with(dataf, Z/ps + (1-Z)/(1-ps))
   
-  return(list(ATE=c(temp.ate, temp.se), clusterATE=temp.dat$clusterATE, clusterSE=temp.dat$clusterSE, sumIPW = temp.dat$wt)) # Li's method
+  IPW_ate = function(IPW, Y, Z) {
+    ATE = sum((IPW*Y)[Z==1])/sum(IPW[Z==1]) - sum((IPW*Y)[Z==0])/sum(IPW[Z==0])
+    return(ATE)
+  }
+  
+  IPW_se = function(IPW, Y, Z, homo=FALSE) {
+    
+    if (homo== FALSE) {
+      sigsq1 = var(Y[Z==1])
+      sigsq0 = var(Y[Z==0])
+    } else {
+      sigsq1 = var(Y)
+      sigsq0 = var(Y) 
+    }
+    
+    SE = sqrt(sigsq1*(sum((IPW[Z==1])^2)/(sum(IPW[Z==1]))^2) + sigsq0*(sum((IPW[Z==0])^2)/(sum(IPW[Z==0]))^2))    
+    return(SE)
+  }
+  
+  if (length(unique(id)) == 1) {
+    temp.ate = IPW_ate(temp.wt, Y, Z)
+    temp.se = IPW_se(temp.wt, Y, Z, homo=FALSE)
+    temp.dat = NULL
+    
+  } else {
+    
+    temp.dat <- dataf %>% group_by(id) %>% summarize(groupATE=IPW_ate(temp.wt, Y, Z), groupSE=IPW_se(temp.wt, Y, Z, homo=TRUE), wt=sum(temp.wt), .groups = 'drop') 
+    temp.ate = sum(temp.dat$groupATE * temp.dat$wt, na.rm = TRUE) / sum(temp.dat$wt[!is.na(temp.dat$groupATE)])
+    temp.se = sqrt(sum(temp.dat$wt^2*temp.dat$groupSE^2, na.rm = TRUE))  / sum(temp.dat$wt[is.finite(temp.dat$groupSE)], na.rm = TRUE)
+    
+  }
+  
+  return(list(ATE=c(temp.ate, temp.se), groupATE=temp.dat$groupATE, groupSE=temp.dat$groupSE, sumIPW = temp.dat$wt)) # Li's method
 }
+
 
 # write a function to get the weighted mean of groups
 GroupWeightedMean <- function(x, w) {
@@ -152,22 +177,22 @@ for (i in 1:n.rep) {
     }
     
     # marginal IPW estimator
-    marginalest_reps[i, ] <- c(li.clusterATE(dat$group.re.PS,  dat$Y, dat$Z, 1)$ATE[1],
-                               li.clusterATE(dat$group.fe.PS,  dat$Y, dat$Z, 1)$ATE[1],
-                               li.clusterATE(dat$group.re.mis.PS,  dat$Y, dat$Z, 1)$ATE[1],
-                               li.clusterATE(dat$group.fe.mis.PS,  dat$Y, dat$Z, 1)$ATE[1])
+    marginalest_reps[i, ] <- c(groupedestimator(dat$group.re.PS,  dat$Y, dat$Z, 1)$ATE[1],
+                               groupedestimator(dat$group.fe.PS,  dat$Y, dat$Z, 1)$ATE[1],
+                               groupedestimator(dat$group.re.mis.PS,  dat$Y, dat$Z, 1)$ATE[1],
+                               groupedestimator(dat$group.fe.mis.PS,  dat$Y, dat$Z, 1)$ATE[1])
     
     # clustered IPW estimator
-    clusterest_reps[i, ] <- c(li.clusterATE(dat$group.re.PS,  dat$Y, dat$Z, dat$id)$ATE[1],
-                              li.clusterATE(dat$group.fe.PS,  dat$Y, dat$Z, dat$id)$ATE[1],
-                              li.clusterATE(dat$group.re.mis.PS,  dat$Y, dat$Z, dat$id)$ATE[1],
-                              li.clusterATE(dat$group.fe.mis.PS,  dat$Y, dat$Z, dat$id)$ATE[1])
+    clusterest_reps[i, ] <- c(groupedestimator(dat$group.re.PS,  dat$Y, dat$Z, dat$id)$ATE[1],
+                              groupedestimator(dat$group.fe.PS,  dat$Y, dat$Z, dat$id)$ATE[1],
+                              groupedestimator(dat$group.re.mis.PS,  dat$Y, dat$Z, dat$id)$ATE[1],
+                              groupedestimator(dat$group.fe.mis.PS,  dat$Y, dat$Z, dat$id)$ATE[1])
     
     # grouped IPW estimator
-    groupest_reps[i, ] <-  c(li.clusterATE(dat$group.re.PS,  dat$Y, dat$Z, dat$group)$ATE[1],
-                             li.clusterATE(dat$group.fe.PS,  dat$Y, dat$Z, dat$group)$ATE[1],
-                             li.clusterATE(dat$group.re.mis.PS,  dat$Y, dat$Z, dat$group)$ATE[1],
-                             li.clusterATE(dat$group.fe.mis.PS,  dat$Y, dat$Z, dat$group)$ATE[1])
+    groupest_reps[i, ] <-  c(groupedestimator(dat$group.re.PS,  dat$Y, dat$Z, dat$group)$ATE[1],
+                             groupedestimator(dat$group.fe.PS,  dat$Y, dat$Z, dat$group)$ATE[1],
+                             groupedestimator(dat$group.re.mis.PS,  dat$Y, dat$Z, dat$group)$ATE[1],
+                             groupedestimator(dat$group.fe.mis.PS,  dat$Y, dat$Z, dat$group)$ATE[1])
     
     # TMLE estimator
     adjTMLEest_reps[i, ] <- 
