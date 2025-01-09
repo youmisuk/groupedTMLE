@@ -17,7 +17,7 @@ Here, we provide `R` codes to reproduce our simulation study and replicate our d
 
 * `SimulationCodes.R`
  
-   This `R` file includes simulation codes with our proposed modifcations for TMLE where `m.val` controls whether there is a cross-level interaction between a cluster-level unmeasured confounder and a treatment variable. For more information on simulation condtions, see [our paper](https://psyarxiv.com/8s7ut/).
+   This `R` file includes simulation codes with our proposed modifcations for TMLE where `m.val` controls whether there is a cross-level interaction between a cluster-level unmeasured confounder and a treatment variable. For more information on simulation condtions, see our paper: [(Preprint)](https://psyarxiv.com/8s7ut/) [(Journal Article)](https://doi.org/10.3102/10769986231162096). 
 
 
 ## ECLS-K Data Study
