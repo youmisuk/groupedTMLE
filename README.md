@@ -6,7 +6,7 @@ Youmi Suk
 
 Machine learning (ML) methods for causal inference have gained popularity due to their flexibility to predict the outcome model and the propensity score. In this paper, we provide a within-group approach for ML-based causal inference methods to robustly estimate average treatment effects in multilevel studies when there is cluster-level unmeasured confounding. We focus on one particular ML-based causal inference method based on the targeted maximum likelihood estimation (TMLE) with an ensemble learner called SuperLearner. Through our simulation studies, we observe that training TMLE within groups of similar clusters helps remove bias from cluster-level unmeasured confounders. Also, using within-group propensity scores estimated from fixed effects logistic regression increases the robustness of the proposed within-group TMLE method. Even if the propensity scores are partially misspecified, the within-group TMLE still produces robust ATE estimates due to double robustness with flexible modeling, unlike parametric-based inverse propensity weighting methods. We demonstrate our proposed methods and conduct sensitivity analyses against the number of groups and individual-level unmeasured confounding to evaluate the effect of taking an eighth-grade algebra course on math achievement in the Early Childhood Longitudinal Study.
 
-For more details of our proposed methods, see [our paper](https://psyarxiv.com/8s7ut/). 
+For more details of our proposed methods, see our paper: [(Preprint)](https://psyarxiv.com/8s7ut/) [(Journal Article)](https://doi.org/10.3102/10769986231162096). 
 Here, we provide `R` codes to reproduce our simulation study and replicate our data analysis using the kindergarten cohort of ECLS (ECLS-K) data. 
 
 ## Simulation Study
